@@ -1,0 +1,25 @@
+{
+"type": "FeatureCollection",
+                                                                                
+"features": [
+{ "type": "Feature", "id": 1, "properties": { "estac": "65007010 - AI55 - JUSANTE CÓRREGO MONJOLO", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 38.850000 }, "geometry": { "type": "Point", "coordinates": [ -49.1944444444444, -25.3816666666667 ] } },
+{ "type": "Feature", "id": 2, "properties": { "estac": "65007020 - AI62 - PARQUE BACACHERI", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 38.027027 }, "geometry": { "type": "Point", "coordinates": [ -49.2297222222222, -25.389444444444401 ] } },
+{ "type": "Feature", "id": 3, "properties": { "estac": "65007022 - AI34 - JUSANTE FRIGORÍFICO BACACHERI", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 59.233333 }, "geometry": { "type": "Point", "coordinates": [ -49.221944444444397, -25.390555555555601 ] } },
+{ "type": "Feature", "id": 4, "properties": { "estac": "65007030 - AI63 - JUSANTE DA BR 116", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 37.394737 }, "geometry": { "type": "Point", "coordinates": [ -49.218611111111102, -25.4091666666667 ] } },
+{ "type": "Feature", "id": 5, "properties": { "estac": "65011000 - AI56 - MONTANTE PARQUE SÃO LOURENÇO", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 38.825000 }, "geometry": { "type": "Point", "coordinates": [ -49.266666666666701, -25.378888888888898 ] } },
+{ "type": "Feature", "id": 6, "properties": { "estac": "65011200 - AI65 - FOZ DO RIO IVO", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 16.514286 }, "geometry": { "type": "Point", "coordinates": [ -49.259722222222202, -25.436388888888899 ] } },
+{ "type": "Feature", "id": 7, "properties": { "estac": "65011350 - AI64 - FOZ DO RIO ÁGUA VERDE", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 21.057143 }, "geometry": { "type": "Point", "coordinates": [ -49.251111111111101, -25.445833333333301 ] } },
+{ "type": "Feature", "id": 8, "properties": { "estac": "65011400 - AI19 - PRADO VELHO UCP", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 21.700000 }, "geometry": { "type": "Point", "coordinates": [ -49.248888888888899, -25.45 ] } },
+{ "type": "Feature", "id": 9, "properties": { "estac": "65011420 - AI67 - FOZ DO RIO PAROLIN", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 22.400000 }, "geometry": { "type": "Point", "coordinates": [ -49.258611111111101, -25.469722222222199 ] } },
+{ "type": "Feature", "id": 10, "properties": { "estac": "65011430 - AI66 - FOZ DO RIO FANY", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 24.305556 }, "geometry": { "type": "Point", "coordinates": [ -49.2525, -25.468611111111102 ] } },
+{ "type": "Feature", "id": 11, "properties": { "estac": "65011500 - AI15 - RODOLFO BERNARDELLI", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 22.408163 }, "geometry": { "type": "Point", "coordinates": [ -49.2286111111111, -25.491111111111099 ] } },
+{ "type": "Feature", "id": 12, "properties": { "estac": "65013005 - AI20 - ETE - SANEPAR", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 28.037037 }, "geometry": { "type": "Point", "coordinates": [ -49.212222222222202, -25.5175 ] } },
+{ "type": "Feature", "id": 13, "properties": { "estac": "65014000 - AI09 - JARDIM PARANAENSE", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 27.552632 }, "geometry": { "type": "Point", "coordinates": [ -49.244444444444397, -25.548055555555599 ] } },
+{ "type": "Feature", "id": 14, "properties": { "estac": "65019650 - AI58 - PONTE CASCATINHA - MANOEL RIBAS", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 47.435897 }, "geometry": { "type": "Point", "coordinates": [ -49.306388888888897, -25.414166666666699 ] } },
+{ "type": "Feature", "id": 15, "properties": { "estac": "65019655 - AI59 - PRÓXIMO A FOZ", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 42.846154 }, "geometry": { "type": "Point", "coordinates": [ -49.307222222222201, -25.422222222222199 ] } },
+{ "type": "Feature", "id": 16, "properties": { "estac": "65019670 - AI60 - SEMINÁRIO (CONECTORA 5)", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 42.441860 }, "geometry": { "type": "Point", "coordinates": [ -49.314722222222201, -25.435833333333299 ] } },
+{ "type": "Feature", "id": 17, "properties": { "estac": "65019700 - AI10 - PONTE DA CAXIMBA", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 29.306818 }, "geometry": { "type": "Point", "coordinates": [ -49.356666666666698, -25.613611111111101 ] } },
+{ "type": "Feature", "id": 18, "properties": { "estac": "65021000 - AI29 - JUSANTE ATERRO SANITÁRIO", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 64.473118 }, "geometry": { "type": "Point", "coordinates": [ -49.344722222222202, -25.364444444444398 ] } },
+{ "type": "Feature", "id": 19, "properties": { "estac": "65021800 - AI32 - BR 277 - CAMPO LARGO", "bacia": "Iguaçu", "munic": "Curitiba", "media_iqa": 61.242991 }, "geometry": { "type": "Point", "coordinates": [ -49.388055555555603, -25.426944444444398 ] } }
+]
+}

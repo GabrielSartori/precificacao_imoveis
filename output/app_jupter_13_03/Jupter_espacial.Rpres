@@ -1,0 +1,836 @@
+Desenvolvendo uma análise em Estatística Espacial
+========================================================
+author: Gabriel Sartori Klostermann
+date: 13/03/2018
+autosize: true
+<!-- transition: rotate -->
+
+```{r, include = FALSE}
+require(knitr)
+
+opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  error = FALSE,
+  warning = FALSE
+)
+
+```
+
+```{r}
+require(sp)
+require(rgdal)
+require(maptools)
+require(rgeos)
+require(dplyr)
+require(spdep)
+require(ggplot2)
+require(RColorBrewer)
+require(classInt)
+require(kableExtra)
+require(gridExtra)
+require(leaflet)
+```
+
+```{r}
+# Mapas 
+setwd("~/Suporte/DataScience/Projetos/precificacao_imoveis")
+grd_cwb <- readOGR(dsn = "./data/shape_cwb/cwb_imoveis_geojson", 
+                   layer = "OGRGeoJSON",
+                   verbose = FALSE)
+# plot(grd_cwb)
+# Contando Dados Faltantes por Linhas
+grd_cwb@data$na <- grd_cwb@data %>%
+  apply(1, function(x) sum(is.na(x)))
+
+# Removendo dados faltantes
+grd_cwb <- grd_cwb[grd_cwb@data$na < 1, ]
+cwb_frac <- grd_cwb
+rm(grd_cwb)
+
+
+```
+
+```{r}
+# Organizando Variáveis
+cwb_frac@data$n_pizza <- as.numeric(as.character(cwb_frac@data$n_pizza))
+cwb_frac@data$n_imo <- as.numeric(as.character(cwb_frac@data$n_imo))
+cwb_frac@data$m2 <- as.numeric(as.character(cwb_frac@data$m2))
+cwb_frac@data$perc_ap <- as.numeric(as.character(cwb_frac@data$perc_ap))
+```
+
+
+Sumário
+========================================================
+- Classes em Estatística Espacial
+  - Processo Pontual
+  - Geoestatística
+  - Dados de Área
+- Aplicação em Dados de Área 
+  
+Classes em Estatística Espacial
+========================================================
+
+```{r, fig.width = 10}
+# Processo Pontual
+# setwd("~/Suporte/DataScience/Projetos/precificacao_imoveis")
+cwb_union <- readOGR(dsn = "./data/shape_cwb/cwb_union_geojson", layer = "OGRGeoJSON",
+                   verbose = FALSE)
+
+proj4string(cwb_union) <- CRS("+proj=utm +zone=22 +south") 
+
+cwb_union <-
+  spTransform(cwb_union,  
+              CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+
+cwb_pj <- readOGR(dsn =                    "/home/gabriel/Suporte/Hackthons/BlueHacks/Scripts/maisparana/gabriel",
+                  layer = 'bairros', 
+                  verbose = FALSE, encoding = 'Latin1')
+
+# plot(cwb_pj)
+par(mfrow = c(1,3), mar = c(1,1,1,1))
+
+# Processo Pontual
+plot(cwb_union)
+points_rnd <- spsample(cwb_union, n = 100, type = "random")
+plot(points_rnd, add = TRUE, pch = "X", col = 2)
+
+
+# Geo Estatístico
+
+grd_iqa <- readOGR(dsn = "./data/shape_cwb/cwb_iqa_geojson", layer = "OGRGeoJSON",
+                   verbose = FALSE)
+plot(cwb_union)
+points(grd_iqa, add = TRUE, cex = grd_iqa$media_iqa/40)
+
+# Dados de Áreas
+cwb_pj$tuber <- rpois(75, 50)
+
+pal_raw <- c(brewer.pal(4, "Oranges"))
+kmeans7_BEL <- classIntervals(round(as.numeric(cwb_pj@data$tuber),2), 
+                              style = "quantile")
+plot(cwb_pj, col = findColours(kmeans7_BEL, pal_raw))
+```
+
+Dengue 
+========================================================
+![alt text](/home/gabriel/Suporte/DataScience/Projetos/precificacao_imoveis/image/coletas.jpg)
+
+Processo Pontual 
+========================================================
+- Ocorrência de dengue
+
+```{r, fig.width = 10}
+
+# par(mfrow = c(1,3), mar=c(1,1,1,1))
+plot(cwb_union)
+points_rnd <- spsample(cwb_union, n = 100, type = "random")
+plot(points_rnd, add = TRUE, pch = "X", col = 2)
+
+```
+
+Processo Pontual 
+========================================================
+- Localização Geográfica - <font color = "red"> Desconhecida </font> à Priori
+- A resposta de interesse é onde irá acontecer !
+
+```{r, fig.width = 10}
+
+par(mfrow = c(1,3), mar=c(1,1,1,1))
+plot(cwb_union)
+set.seed(10)
+points_rnd <- spsample(cwb_union, n = 100, type = "random")
+plot(points_rnd, add = TRUE, pch = "X", col = 2)
+
+plot(cwb_union)
+points_reg <- spsample(cwb_union, n = 100, type = "regular")
+plot(points_reg, add = TRUE, pch = "X", col = 2)
+
+plot(cwb_union)
+points_cl <- spsample(cwb_union, n = 100, type = "clustered", nclusters = 5)
+plot(points_cl, add = TRUE, pch = "X", col = 2)
+
+```
+
+Geoestatística 
+========================================================
+- Localização Geográfica é <font color="green"> Definida </font> à Priori 
+- Quantidade de focos da dengue nas casas
+
+```{r}
+# Qualidade da Água
+plot(cwb_union)
+set.seed(10)
+points_rnd <- spsample(cwb_union, n = 20, type = "random")
+plot(points_rnd, add = TRUE, cex = seq(1, 4, length.out = 20), pch = "o")
+```
+
+Geoestatística 
+========================================================
+- Resposta de interesse é: o quanto irá acontecer ! 
+
+```{r}
+plot(cwb_union)
+set.seed(10)
+points_rnd <- spsample(cwb_union, n = 20, type = "random")
+plot(points_rnd, add = TRUE, cex = seq(1, 5, length.out = 20), pch = "o")
+
+grd <- expand.grid(
+  x = seq(from = bbox(cwb_union)[1,1],  to = bbox(cwb_union)[1,2], by = 0.01), 
+  y = seq(from = bbox(cwb_union)[2,1], to = bbox(cwb_union)[2,2], by = 0.01))
+
+## convert grid to SpatialPixel class
+coordinates(grd) <- ~ x+y
+gridded(grd) <- TRUE
+
+proj4string(grd) <- 
+  c("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0")
+
+spgrdWithin <- SpatialPixels(grd[cwb_union,])
+plot(spgrdWithin)
+
+cdIDW <- gstat::idw(media_iqa ~ 1,
+  locations = grd_iqa,
+  newdata = spgrdWithin)
+plot(cdIDW)
+```
+
+***
+
+![alt text](/home/gabriel/Suporte/DataScience/Projetos/precificacao_imoveis/output/app_jupter_13_03/image/grid_geo.png)
+
+
+Dados de Área
+========================================================
+- Localização Geográfica é <font color="green"> Definida  </font> à Priori 
+- Resposta de Interesse: Quantidade de Focos de Dengue em uma determinada área 
+
+```{r, fig.width = 12}
+
+# setwd("~/Suporte/DataScience/Meetup/Curitiba/app_13_03/variaveis")
+
+cwb_grid <- readOGR(dsn = "./data/shape_cwb/cwb_geojson_grid", layer = "OGRGeoJSON",
+                   verbose = FALSE)
+
+par(mfrow = c(1,3))
+plot(cwb_pj)
+plot(cwb_union)
+plot(cwb_grid)
+```
+
+Vizinhança 
+========================================================
+
+```{r, fig.width = 12, out.width = '100%'}
+# MOvimento 
+vizi_rainha <- spdep::poly2nb(cwb_frac, queen = TRUE)
+vizi_torre <- spdep::poly2nb(cwb_frac, queen = FALSE)
+coords <- coordinates(cwb_frac)
+
+par(mfrow = c(1,4), mar = c(0,0, 0, 0))
+
+plot(cwb_frac)
+plot(vizi_rainha, coords, add = TRUE, col = 'red')
+# title(main = "Movimento Rainha")
+
+plot(cwb_frac)
+plot(vizi_torre, coords, add = TRUE, col = 'blue')
+# title(main = "Movimento Torre")
+
+# Número de Vizinhos
+
+d05m = dnearneigh(coords, 0, 0.05)
+
+plot(cwb_frac)
+plot(d05m, coords, add = TRUE, col = 'black')
+# title(main = "Distância")
+
+nb.5NN = knn2nb(knearneigh(coords, k = 5)) #set the number of neighbors (here 5)
+
+plot(cwb_frac)
+plot(nb.5NN, coords, add = TRUE, col = 'brown')
+# title(main = "Todos com 5 vizinhos")
+```
+
+
+Peso Vizinhança
+========================================================
+```{r}
+## Subpartição de Análise
+ponderado <- spdep::nb2listw(vizi_rainha, style = 'W')
+
+
+sub_areas <- cwb_frac[1:4, ]
+vizi_sub <- spdep::poly2nb(sub_areas, queen = TRUE)
+coords_are <- coordinates(sub_areas)
+
+plot(sub_areas)
+plot(vizi_sub, coords_are, add = TRUE, col = 'brown')
+text(coordinates(sub_areas), labels = sub_areas@data$id,)
+
+```
+
+***
+
+```{r, results='asis'}
+require(DT)
+# Matrix Binária
+ex_bin <- spdep::nb2mat(spdep::poly2nb(sub_areas, queen = TRUE), style = "B")
+ex_bin <- ex_bin %>% 
+  data.frame()
+
+names(ex_bin) <- sub_areas@data$id
+rownames(ex_bin) <- sub_areas@data$id
+
+kable(ex_bin)
+
+
+# Matrix Ponderada
+ex_pondera <- spdep::nb2mat(spdep::poly2nb(sub_areas, queen = TRUE))
+
+ex_pondera <- ex_pondera %>% 
+  data.frame()
+
+names(ex_pondera) <- sub_areas@data$id
+rownames(ex_pondera) <- sub_areas@data$id
+kable(ex_pondera, digits = 2)
+
+```
+
+Aplicação
+========================================================
+type:section
+<!-- Imagem dados  Portal da Prefeitura -->
+
+Objetivo
+========================================================
+<!-- Imagem dados  Portal da Prefeitura -->
+- <font color = "blue"> Identificar áreas com preço de imóveis acima/abaixo dos vizinhos </font>
+
+- <font color = "blue"> Agrupar áreas conforme dos preço de imóveis  </font>
+- <font color = "brown"> Identificar fator que possa associar o preço dos imóveis </font>
+
+Base de Dados 
+========================================================
+type:section
+
+
+Viva Real
+========================================================
+title:false
+![alt text](/home/gabriel/Suporte/DataScience/Projetos/precificacao_imoveis/output/app_jupter_13_03/image/logo_viva_real.png)
+
+
+```{r, results = 'asis'}
+
+load("./data/df/imoveis-geo.rda")
+
+names(imoveis) <- c("imovel", "cobranca", "preco", "bairro", "Area", "lat", "long", "m2")
+dim(imoveis)[1]
+rownames(imoveis) <- NULL
+# head(imoveis)
+
+kable(imoveis[c(1, 5, 10), c("imovel", "preco", 'cobranca', "Area", "m2", "lat", "long")])
+```
+
+Procedimento
+========================================================
+left:70%
+```{r, fig.width = 12, fig.height = 10}
+par(mfrow = c(1,1))
+plot(cwb_grid)
+points(imoveis$lon, imoveis$lat)
+```
+
+***
+
+```{r}
+x <- head(cwb_frac@data[,c("id", "m2")])
+names(x)[1] <- "area"
+rownames(x) <- NULL
+kable(head(x))
+```
+
+Mapa do M² Médio por Área
+========================================================
+```{r, fig.width = 10}
+
+paleta_m2 <- colorBin("Oranges", cwb_frac@data$m2)
+
+mapa_m2 <- spplot(cwb_frac, "m2", 
+       cut = 6,
+       # at = seq(from = 0, to = 9000, by = 1500), 
+       par.settings = list(axis.line = list(col=NA)),
+       col.regions = brewer.pal(7, 'Oranges'))
+mapa_m2
+```
+
+1º Passo
+========================================================
+type: section
+
+Dependência Espacial
+========================================================
+- Índice de Moran
+- Hipótese Nula - Não Há dependência Espacial
+- Hipótese Alternativa - Há dependência Espacial
+- Interpretação de Correlação [-1 a 1]
+
+$$ I = \frac{n}{S_0}
+\frac{\displaystyle\sum_{i=1}^n \sum_{j=1}^n w_{ij}(x_i - \bar{x})(x_j -
+  \bar{x})}{\displaystyle\sum_{i=1}^n (x_i - \bar{x})^2} $$
+
+Diagrama de Dispersão do Moran
+========================================================
+
+```{r, fig.width = 10}
+cwb_matrix <- spdep::nb2mat(vizi_rainha)
+# (cont/pop)*10000
+
+## Cálculo da média da Segurança Padronizada nos vizinhos
+cwb_frac$vizi_area <- cwb_matrix %*% cwb_frac$m2
+
+## Diagrama de espalhamento de Moran
+mean_area <- mean(cwb_frac$m2)
+mean_vizi <- mean(cwb_frac$vizi_area)
+
+## Padronizado M
+cwb_frac$padro_media <- base::scale(cwb_frac$m2)
+cwb_frac$padro_vizi <- cwb_matrix %*% scale(cwb_frac$m2)
+
+cwb_frac$group_moran <-
+  ifelse((cwb_frac$padro_media >=0 & cwb_frac$padro_vizi >= 0 ), "Alto - Alto", 0)
+
+cwb_frac$group_moran[(cwb_frac$padro_media < 0 & cwb_frac$padro_vizi < 0)] <- "Baixo - Baixo"
+cwb_frac$group_moran[(cwb_frac$padro_media >= 0 & cwb_frac$padro_vizi < 0)] <- "Alto - Baixo"
+cwb_frac$group_moran[(cwb_frac$padro_media < 0 & cwb_frac$padro_vizi >= 0)] <- "Baixo - Alto"
+
+cwb_frac$group_moran <- as.factor(cwb_frac$group_moran)
+
+cwb_frac@data %>%
+  ggplot(aes(x = m2, y = vizi_area)) + 
+  geom_point(aes(colour = group_moran, size = 2)) +
+  geom_hline(yintercept = mean_area, linetype = 'dashed') +
+  geom_vline(xintercept = mean_vizi, linetype = 'dashed') +
+  labs(x = "Preço do M² na Área", y = "Preço do M² nos Vizinhos", 
+       title = "I de Moran = 0.68",
+       colour = "") +
+  theme_bw() +
+  theme(
+    axis.text.y = element_text(size = 15), 
+    axis.text.x = element_text(size = 15),
+    legend.text = element_text(size = 15),
+    plot.title = element_text(size = 20, hjust = 0.5),
+    axis.title=element_text(size=14,face="bold")) +
+  scale_color_brewer(palette = 'Spectral') +
+  scale_size(guide = 'none')+
+  guides(color = guide_legend(override.aes = list(size=5)))
+
+```
+
+Mapa de Dispersão do Moran
+========================================================
+
+```{r, fig.width = 12}
+
+moran_mapa <-
+  spplot(cwb_frac, zcol = "group_moran", 
+       col.regions = brewer.pal(4, "Spectral"), 
+       par.settings = list(axis.line = list(col = NA)),
+       main = '')
+
+# key.space=list(x=0.2,y=0.9,corner=c(0,1))
+
+gridExtra::grid.arrange(mapa_m2, moran_mapa, ncol = 2)
+```
+
+
+<!-- I de Moran Global -->
+<!-- ======================================================== -->
+```{r}
+spdep::moran.mc(cwb_frac$m2, listw = ponderado, 
+                nsim = 1000)
+```
+
+Estatisticamente Diferente
+========================================================
+type:section
+
+I de Moran Local
+========================================================
++ Hipótese Nula: A área não é diferente dos vizinhos
++ Hipótese Alternativa: A área é diferente do vizinhos (Outliers Locais)
+  - Acima
+  - Abaixo
+  
+$$ I_i = \frac{(x_i-\bar{x})}{{∑_{k=1}^{n}(x_k-\bar{x})^2}/(n-1)}{∑_{j=1}^{n}w_{ij}(x_j-\bar{x})} $$
+
+
+Outliers Locais Acima
+========================================================
+
+```{r, fig.width = 12}
+locmoran_maior <- spdep::localmoran(cwb_frac$m2, 
+                              listw = ponderado, alternative = 'greater')
+# Criando variável no banco
+cwb_frac$out_maior <-  as.factor(
+  as.vector(ifelse(locmoran_maior[,5] > 0.05, "N", "S")))
+
+moran_maior <-
+  spplot(cwb_frac, zcol = "out_maior", 
+       col.regions = brewer.pal(3, "Reds"), 
+       par.settings = list(axis.line = list(col = NA)),
+       main = '')
+
+gridExtra::grid.arrange(moran_mapa, moran_maior, ncol = 2)
+```
+
+
+Outliers Locais Abaixo
+========================================================
+
+```{r, fig.width = 12}
+locmoran_menor <- spdep::localmoran(cwb_frac$m2, 
+                              listw = ponderado, alternative = 'less')
+
+cwb_frac$out_menor <-  as.factor(
+  as.vector(ifelse(locmoran_menor[,5] > 0.05, "N", "S")))
+
+moran_menor <-
+  spplot(cwb_frac, zcol = "out_menor", 
+       col.regions = "cadetblue2", 
+       par.settings = list(axis.line = list(col = NA)),
+       main = '')
+
+gridExtra::grid.arrange(moran_mapa, moran_menor, ncol = 2)
+
+```
+
+Agrupar Áreas
+========================================================
+type:section
+
+<!-- Agora vamos pensar em regiões e não apenas áreas --> 
+
+Skater 
+======================================================== 
+(Cluster Espacial)
+
+![alt text](/home/gabriel/Suporte/DataScience/Projetos/precificacao_imoveis/output/app_jupter_13_03/image/spanning.png)
+
+Árvore Geradora Mínima
+========================================================
+```{r, fig.width = 12}
+lcosts <- spdep::nbcosts(vizi_rainha, cwb_frac$m2, method = 'euclidean')
+nb.w <- spdep::nb2listw(vizi_rainha, lcosts, style = "W")
+
+### Encontrando a arvore geradora mínima
+mst.cwb <- spdep::mstree(nb.w, 2)
+
+# mst.cwb
+par(mfrow = c(1,2))
+
+plot(cwb_frac)
+plot(vizi_rainha, coords, add = TRUE, col = 'red')
+
+plot(cwb_frac)
+plot(mst.cwb, 
+     add = TRUE,
+     coordinates(coords),
+     col = 2,
+     cex.lab=.1,
+     lwd = 3
+     ) 
+```
+
+Removendo Arestas
+========================================================
+
+```{r, fig.width = 12}
+poda <- skater(mst.cwb[,1:2], scale(cwb_frac$m2), 1)
+poda2 <- skater(mst.cwb[,1:2], scale(cwb_frac$m2), 2)
+poda3 <- skater(mst.cwb[,1:2], scale(cwb_frac$m2), 3)
+require(RColorBrewer)
+cores <- rev(brewer.pal(4, "Dark2"))
+# cores <- c("brown", "darkred", "purple", "")
+# par(mfrow=c(1,4))
+
+plot(cwb_frac)
+plot(mst.cwb, 
+     add = TRUE,
+     coordinates(coords),
+     col = 2,
+     cex.lab=.1,
+     lwd = 3
+     ) 
+```
+
+Removendo Arestas - 2 Grupos
+========================================================
+```{r, fig.width = 12}
+plot(cwb_frac)
+plot(poda, 
+     add = TRUE,
+     coordinates(coords),
+     cex.lab=.1,
+     lwd = 3,
+     groups.colors=c("red", cores[1]))
+
+```
+
+
+Removendo Arestas - 3 Grupos
+========================================================
+```{r, fig.width = 12}
+plot(cwb_frac)
+plot(poda2, 
+     add = TRUE,
+     coordinates(coords),
+     cex.lab=.1,
+     lwd = 3,
+     groups.colors =c("red", cores[1:2]))
+
+```
+
+Removendo Arestas - 4 Grupos
+========================================================
+
+```{r, fig.width = 12}
+plot(cwb_frac)
+plot(poda3, 
+     add = TRUE,
+     coordinates(coords),
+     cex.lab=.1,
+     lwd = 3,
+     groups.colors=c("red", cores[1:3])
+     ) 
+
+```
+
+Critério de Poda
+========================================================
+incremental: true
+- Operacional
+- Estabilizar o Gráfico de Variabilidade
+
+$$Variação = \sum_{j}^{k} \sum_{j}^{n}(x_{i}- c_{j})^{2}$$
+
+Gráfico da Variabilidade
+========================================================
+```{r}
+poda_10 <- skater(mst.cwb[,1:2], scale(cwb_frac$m2), 9)
+
+df <- data.frame(poda_10$candidates, poda_10$ssw)
+
+df %>% 
+  ggplot(aes(x = poda_10.candidates, y = poda_10.ssw)) +
+  geom_line() +
+  geom_point() +
+  theme_bw() +
+  labs(x = "Grupos", y = "Variabilidade") +
+  theme(
+    axis.text.y = element_text(size = 15), 
+    axis.text.x = element_text(size = 15),
+    legend.text = element_text(size = 15),
+    axis.title=element_text(size=14,face="bold")) +
+  scale_x_continuous(breaks = seq(1, 10, 1))
+```
+
+
+Grupo Ideal 
+========================================================
+left: 70%
+
+```{r, fig.width = 12, fig.height=10}
+poda_4 <- skater(mst.cwb[,1:2], scale(cwb_frac$m2), 3)
+
+cwb_frac$grupo_sk4 <- as.factor(poda_4$groups)
+levels(cwb_frac$grupo_sk4) <- c("1","3","2", "4")
+cwb_frac$grupo_sk4 <- factor(cwb_frac$grupo_sk4, levels(cwb_frac$grupo_sk4)[c(1,3,2,4)])
+
+spplot(cwb_frac, zcol = "grupo_sk4", 
+       col.regions = brewer.pal(4, "Oranges"), 
+       par.settings = list(axis.line = list(col = NA)),
+       main = '')
+```
+
+***
+
+```{r, result = 'asis'}
+# Média do Metro Quadrado
+tab_skater <- cwb_frac@data %>% 
+  group_by(grupo_sk4) %>%
+  summarise(mean(m2))
+
+names(tab_skater) <-  c("grupo", "media_M2")
+
+kable(tab_skater)
+```
+
+Identificar Fatores
+========================================================
+type:section
+
+Variável Associada
+========================================================
+```{r, fig.width = 12}
+mapa_pizza <- 
+  spplot(cwb_frac,
+         zcol = 'n_pizza',
+         cut = 3,
+         col.regions = brewer.pal(4, "Reds"),
+         par.settings = list(axis.line = list(col = NA)),
+         main = "Número de Pizzarias"
+  )
+
+cwb_frac$perc_ap <-  cwb_frac$perc_ap*100
+
+# mapa_ap <- 
+  # spplot(cwb_frac,
+         # zcol = 'perc_ap',
+         # cut = 4,
+         # col.regions = brewer.pal(5, "Greys"),
+         # par.settings = list(axis.line = list(col = NA)),
+         # main = "Porcentagem de Apartamentos \n em Oferta"
+# )
+
+mapa_m2 <- spplot(cwb_frac, "m2", 
+       cut = 6,
+       main = "Preço do m² nas áreas",
+       par.settings = list(axis.line = list(col = NA)),
+       col.regions = brewer.pal(7, 'Oranges'))
+
+grid.arrange(mapa_m2, mapa_pizza, ncol = 2)
+```
+
+Predição m² sem efeito Espacial
+==============================
+
+```{r, fig.width = 9}
+ggplot(cwb_frac@data, aes(y= m2, x = n_pizza)) +
+  geom_point() +
+  theme_bw() +
+  # geom_smooth(method = "lm") +
+  theme(
+    axis.text.y = element_text(size = 15), 
+    axis.text.x = element_text(size = 15),
+    legend.text = element_text(size = 15),
+    axis.title = element_text(size = 14, face = "bold"))
+```
+
+
+Predição m² sem efeito Espacial
+==============================
+
+```{r, fig.width = 9}
+ggplot(cwb_frac@data, aes(y= m2, x = n_pizza)) +
+  geom_point() +
+  theme_bw() +
+  geom_smooth(method = "lm") +
+  theme(
+    axis.text.y = element_text(size = 15), 
+    axis.text.x = element_text(size = 15),
+    legend.text = element_text(size = 15),
+    axis.title = element_text(size = 14, face = "bold"))
+```
+
+
+Ajuste de modelo sem Efeito Espacial
+================================= 
+incremental: true
++ $M^{2}$ = 3558 + $Npizza*135$
++ $R^{2}$ = 23% Variabilidade
+
+```{r, fig.width = 9}
+m_simpl <- lm(m2 ~ n_pizza, data = cwb_frac@data)
+summary(m_simpl)
+
+# rm(m_esp)
+
+# summary(m_esp)
+# class(m_esp)
+# m_esp$rest.se
+
+# m_esp$rest.se
+# coef(m_esp)
+```
+
+
+
+Predição sem Efeito Espacial
+=================================             
+
+```{r, fig.width = 9}
+y <- cwb_frac@data$m2
+pred <- predict(m_simpl)
+
+ggplot() +
+  aes(y = pred, x = y) +
+  geom_point() +
+  theme_bw() +
+  labs(x = "Observado", y = "Esperado") +
+  geom_abline(intercept = 0, slope = 1, colour = 'red') +
+  theme(
+    axis.text.y = element_text(size = 15), 
+    axis.text.x = element_text(size = 15),
+    legend.text = element_text(size = 15),
+    axis.title=element_text(size = 14, face = "bold"))
+```
+
+Modelo com Efeito Espacial
+=================================
++ $M^{2}$ = $3784$ + $NPizza*22$  +  $\lambda$ (0.8) $W_{ij}$ (y_${i}$)
++ $R^{2}$ = 74% Variabilidade
+
+```{r}
+m_esp <- errorsarlm(m2 ~ n_pizza, data = cwb_frac@data, 
+                  listw = ponderado)
+
+y <- cwb_frac@data$m2
+pred <- predict(m_simpl)
+W <- spdep::nb2mat(vizi_rainha, style = 'B')
+
+# dim(ponderado)
+betas <- coef(m_esp)[2:3]
+lam <- coef(m_esp)[1]
+X <- model.matrix(~n_pizza, data = cwb_frac@data)
+
+mu <- X%*% betas
+u <- cwb_frac@data$m2 - mu 
+pred_meu <- mu + ((lam * W %*% u))
+
+
+ex_bin <- spdep::nb2mat(spdep::poly2nb(sub_areas, queen = TRUE), style = "W")
+# MOdelo simples
+R2 <- 1 - (sum((y-  pred )^2)/sum((y-mean(y))^2))
+
+pred_esp <- predict.sarlm(m_esp)
+pred_esp_t <- unclass(pred_esp)
+
+R_esp <- 1 - (sum((y-  pred_esp_t)^2)/sum((y-mean(y))^2))
+```
+
+
+```{r, fig.width = 9}
+ggplot() +
+  aes(y = pred_esp_t, x = y) +
+  geom_point() +
+  theme_bw() +
+  labs(x = "Observado", y = "Esperado") +
+  geom_abline(intercept = 0, slope = 1, colour = 'red') +
+  theme(
+    axis.text.y = element_text(size = 15), 
+    axis.text.x = element_text(size = 15),
+    legend.text = element_text(size = 15),
+    axis.title = element_text(size=14,face="bold"))
+```
+
+Próximo Passos
+=================================
++ Adicionar variáveis de Qualidade de Vida
++ Adicionar variáveis de Empreendimento
+
+Obrigado
+=================================
+type:section
