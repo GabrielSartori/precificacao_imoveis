@@ -73,7 +73,7 @@ Classes em Estatística Espacial
 
 ```{r, fig.width = 10}
 # Processo Pontual
-# setwd("~/Suporte/DataScience/Projetos/precificacao_imoveis")
+setwd("~/Suporte/DataScience/Projetos/precificacao_imoveis")
 cwb_union <- readOGR(dsn = "./data/shape_cwb/cwb_union_geojson", layer = "OGRGeoJSON",
                    verbose = FALSE)
 
@@ -115,7 +115,7 @@ plot(cwb_pj, col = findColours(kmeans7_BEL, pal_raw))
 
 Dengue 
 ========================================================
-![alt text](/home/gabriel/Suporte/DataScience/Projetos/precificacao_imoveis/image/coletas.jpg)
+![alt text](/home/gabriel/Suporte/DataScience/Projetos/precificacao_imoveis/output/app_jupter_13_03/image/coletas.jpg)
 
 Processo Pontual 
 ========================================================
@@ -208,7 +208,7 @@ Dados de Área
 
 ```{r, fig.width = 12}
 
-# setwd("~/Suporte/DataScience/Meetup/Curitiba/app_13_03/variaveis")
+setwd("~/Suporte/DataScience/Projetos/precificacao_imoveis")
 
 cwb_grid <- readOGR(dsn = "./data/shape_cwb/cwb_geojson_grid", layer = "OGRGeoJSON",
                    verbose = FALSE)
@@ -323,7 +323,7 @@ title:false
 
 
 ```{r, results = 'asis'}
-
+setwd("~/Suporte/DataScience/Projetos/precificacao_imoveis")
 load("./data/df/imoveis-geo.rda")
 
 names(imoveis) <- c("imovel", "cobranca", "preco", "bairro", "Area", "lat", "long", "m2")
